@@ -1,1 +1,0 @@
-function calculateRisk(l,s){let score=l*s;let category="Low";if(score>5)category="Medium";if(score>10)category="High";if(score>15)category="Very High";return{score,category};}
