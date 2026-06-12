@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DR Assessment Builder Pro V2.1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body{font-family:Arial;background:#eef2f7;padding:20px}
+.card{max-width:1200px;margin:auto;background:#fff;padding:20px;border-radius:12px}
+input,select,textarea,button{width:100%;padding:10px;margin:5px 0}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:6px}
+.low{background:#c8f7c5}.med{background:#fff3b0}.high{background:#ffd6a5}.vhigh{background:#ffadad}
+pre{white-space:pre-wrap;background:#f7f7f7;padding:10px}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>DR Assessment Builder Pro V2.1</h1>
+
+<input id="project" placeholder="Project">
+<input id="client" placeholder="Client">
+<input id="location" placeholder="Location">
+<input id="assessor" placeholder="Assessor">
+
+<select id="template" onchange="loadTemplate()">
+<option value="">Select Activity Template</option>
+<option>Working at Height</option>
+<option>Confined Space</option>
+<option>Hot Works</option>
+</select>
+
+<input id="hazard" placeholder="Hazard">
+<input id="control" placeholder="Control Measure">
+<select id="likelihood"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<select id="severity"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<input id="resLikelihood" type="number" min="1" max="5" value="1">
+<input id="resSeverity" type="number" min="1" max="5" value="1">
+<button onclick="addHazard()">Add Hazard</button>
+
+<table id="hazTable">
+<tr><th>Hazard</th><th>Initial Risk</th><th>Controls</th><th>Residual Risk</th></tr>
+</table>
+
+<button onclick="previewRAMS()">Generate RAMS</button>
+<button onclick="exportPDF()">Export PDF</button>
+
+<pre id="preview"></pre>
+</div>
+
+<script>
+let assessment={hazards:[]};
+
+const templates={
+"Working at Height":[["Falls from Height","Harness, Rescue Plan"],["Falling Objects","Exclusion Zone"]],
+"Confined Space":[["Oxygen Deficiency","Gas Monitor, Ventilation"],["Restricted Access","Permit & Rescue Team"]],
+"Hot Works":[["Fire","Hot Work Permit"],["Burns","PPE"]]
+};
+
+function riskCat(s){
+if(s<=5)return "Low";
+if(s<=10)return "Medium";
+if(s<=15)return "High";
+return "Very High";
+}
+
+function riskClass(s){
+if(s<=5)return "low";
+if(s<=10)return "med";
+if(s<=15)return "high";
+return "vhigh";
+}
+
+function loadTemplate(){
+const t=template.value;
+if(!templates[t]) return;
+templates[t].forEach(item=>{
+hazard.value=item[0];
+control.value=item[1];
+addHazard();
+});
+}
+
+function addHazard(){
+let h=hazard.value;
+let c=control.value;
+let l=parseInt(likelihood.value);
+let s=parseInt(severity.value);
+let r=l*s;
+let rl=parseInt(resLikelihood.value);
+let rs=parseInt(resSeverity.value);
+let rr=rl*rs;
+
+assessment.hazards.push({h,c,r,rr});
+
+hazTable.innerHTML += `<tr>
+<td>${h}</td>
+<td class="${riskClass(r)}">${r} (${riskCat(r)})</td>
+<td>${c}</td>
+<td class="${riskClass(rr)}">${rr} (${riskCat(rr)})</td>
+</tr>`;
+}
+
+function previewRAMS(){
+let txt=`DR Assessment Builder Pro V2.1\n\nProject: ${project.value}\nClient: ${client.value}\nLocation: ${location.value}\nAssessor: ${assessor.value}\n\n`;
+assessment.hazards.forEach(x=>{
+txt+=`Hazard: ${x.h}\nInitial Risk: ${x.r}\nControls: ${x.c}\nResidual Risk: ${x.rr}\n\n`;
+});
+preview.textContent=txt;
+}
+
+async function exportPDF(){
+previewRAMS();
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF();
+pdf.text(pdf.splitTextToSize(preview.textContent,180),10,10);
+pdf.save("DR-RAMS-V2.pdf");
+}
+</script>
+</body>
+</html>
