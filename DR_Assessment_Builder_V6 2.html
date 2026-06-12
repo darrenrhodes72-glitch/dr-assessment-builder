@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DR Assessment Builder V6</title>
+<style>
+body{font-family:Arial;margin:20px;background:#f2f5f7}
+.card{max-width:1000px;margin:auto;background:#fff;padding:20px;border-radius:10px}
+input,select,button,textarea{width:100%;padding:10px;margin:5px 0}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:6px}
+canvas{border:1px solid #000;width:100%;max-width:400px;height:150px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="card">
+<h1>DR Assessment Builder V6</h1>
+
+<h2>Project Details</h2>
+<input id="project" placeholder="Project Title">
+<input id="client" placeholder="Client">
+<input id="location" placeholder="Location">
+<input id="assessor" placeholder="Assessor">
+
+<h2>Add Hazard</h2>
+<input id="hazardName" placeholder="Hazard">
+<select id="likelihood"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<select id="severity"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<button onclick="addHazard()">Add Hazard</button>
+
+<table id="hazardsTable">
+<tr><th>Hazard</th><th>L</th><th>S</th><th>Risk</th><th>Category</th></tr>
+</table>
+
+<h2>Assessor Signature</h2>
+<canvas id="sig"></canvas>
+<button onclick="clearSig()">Clear Signature</button>
+
+<button onclick="saveAssessment()">Save Assessment</button>
+<button onclick="loadAssessment()">Load Assessment</button>
+<button onclick="generatePDF()">Generate PDF</button>
+
+<pre id="status"></pre>
+</div>
+
+<script>
+let assessment={hazards:[]};
+
+function riskCategory(score){
+ if(score<=5)return "Low";
+ if(score<=10)return "Medium";
+ if(score<=15)return "High";
+ return "Very High";
+}
+
+function addHazard(){
+ let h=document.getElementById('hazardName').value;
+ let l=parseInt(document.getElementById('likelihood').value);
+ let s=parseInt(document.getElementById('severity').value);
+ let r=l*s;
+ assessment.hazards.push({hazard:h,l,s,r,c:riskCategory(r)});
+ renderHazards();
+}
+
+function renderHazards(){
+ let t=document.getElementById('hazardsTable');
+ t.innerHTML='<tr><th>Hazard</th><th>L</th><th>S</th><th>Risk</th><th>Category</th></tr>';
+ assessment.hazards.forEach(x=>{
+ t.innerHTML+=`<tr><td>${x.hazard}</td><td>${x.l}</td><td>${x.s}</td><td>${x.r}</td><td>${x.c}</td></tr>`;
+ });
+}
+
+function saveAssessment(){
+ assessment.project=project.value;
+ assessment.client=client.value;
+ assessment.location=location.value;
+ assessment.assessor=assessor.value;
+ localStorage.setItem('drAssessment',JSON.stringify(assessment));
+ status.textContent='Assessment saved';
+}
+
+function loadAssessment(){
+ let d=localStorage.getItem('drAssessment');
+ if(!d)return;
+ assessment=JSON.parse(d);
+ project.value=assessment.project||'';
+ client.value=assessment.client||'';
+ location.value=assessment.location||'';
+ assessor.value=assessment.assessor||'';
+ renderHazards();
+ status.textContent='Assessment loaded';
+}
+
+async function generatePDF(){
+ const {jsPDF}=window.jspdf;
+ const pdf=new jsPDF();
+ pdf.text("DR Assessment Builder RAMS",10,10);
+ pdf.text("Project: "+project.value,10,20);
+ pdf.text("Client: "+client.value,10,30);
+ let y=50;
+ pdf.text("Hazards:",10,40);
+ assessment.hazards.forEach(h=>{
+   pdf.text(`${h.hazard} Risk:${h.r} ${h.c}`,10,y);
+   y+=10;
+ });
+ pdf.save("DR-RAMS.pdf");
+}
+
+const canvas=document.getElementById('sig');
+const ctx=canvas.getContext('2d');
+let draw=false;
+canvas.addEventListener('pointerdown',()=>draw=true);
+canvas.addEventListener('pointerup',()=>draw=false);
+canvas.addEventListener('pointermove',e=>{
+ if(!draw)return;
+ const r=canvas.getBoundingClientRect();
+ ctx.lineTo(e.clientX-r.left,e.clientY-r.top);
+ ctx.stroke();
+});
+function clearSig(){ctx.clearRect(0,0,canvas.width,canvas.height);}
+</script>
+</body>
+</html>
