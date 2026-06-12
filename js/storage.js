@@ -1,0 +1,2 @@
+function saveAssessment(){localStorage.setItem('drAssessment',JSON.stringify(currentAssessment));}
+function loadAssessment(){let d=localStorage.getItem('drAssessment');if(!d)return;currentAssessment=JSON.parse(d);}

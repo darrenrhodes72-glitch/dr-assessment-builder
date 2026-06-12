@@ -1,0 +1,5 @@
+const controlsLibrary={
+"Falls from height":["Competent personnel only","Pre-use inspections","Rescue plan available","Edge protection"],
+"Fire":["Hot work permit","Fire extinguisher available","Fire watch in place","Remove combustibles"],
+"Train strike":["Safe system of work","COSS appointed","Line blockage confirmed","Briefing completed"]
+};
