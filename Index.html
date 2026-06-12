@@ -1,1 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DR Assessment Builder</title>
 
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#f2f5f7;
+margin:0;
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h1{
+text-align:center;
+}
+
+button{
+padding:12px;
+width:100%;
+background:#005ea5;
+color:white;
+border:none;
+border-radius:5px;
+margin-top:10px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:5px;
+margin-bottom:15px;
+}
+
+pre{
+background:#f8f8f8;
+padding:15px;
+border-radius:5px;
+white-space:pre-wrap;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>DR Assessment Builder</h1>
+
+<div id="questionBox"></div>
+
+<div id="answerBox"></div>
+
+<button id="nextBtn" onclick="nextQuestion()">Next</button>
+
+<pre id="output"></pre>
+
+</div>
+
+<script>
+
+let answers = {};
+
+let questions = [
+
+{
+id:"project",
+text:"Project Title",
+type:"text"
+},
+
+{
+id:"location",
+text:"Location",
+type:"text"
+},
+
+{
+id:"activity",
+text:"What activity is being carried out?",
+type:"select",
+options:[
+"Working at Height",
+"Confined Space",
+"Hot Works",
+"Electrical Work",
+"Rail Work",
+"Steelworks Maintenance"
+]
+}
+
+];
+
+let currentQuestion = 0;
+
+const hazardLibrary = {
+
+"Working at Height":[
+"Falls from height",
+"Falling objects",
+"Ladder failure"
+],
+
+"Confined Space":[
+"Oxygen deficiency",
+"Toxic atmosphere",
+"Restricted access"
+],
+
+"Hot Works":[
+"Fire",
+"Explosion",
+"Burns"
+],
+
+"Electrical Work":[
+"Electric shock",
+"Arc flash",
+"Unexpected energisation"
+],
+
+"Rail Work":[
+"Train strike",
+"Electrocution",
+"Slips Trips Falls"
+],
+
+"Steelworks Maintenance":[
+"Moving plant",
+"Overhead cranes",
+"Hot surfaces"
+]
+
+};
+
+function renderQuestion(){
+
+let q = questions[currentQuestion];
+
+document.getElementById("questionBox").innerHTML =
+"<h2>"+q.text+"</h2>";
+
+let html = "";
+
+if(q.type==="text"){
+
+html =
+'<input id="answer">';
+
+}
+
+if(q.type==="select"){
+
+html =
+'<select id="answer">';
+
+q.options.forEach(option=>{
+
+html +=
+'<option>'+option+'</option>';
+
+});
+
+html +=
+'</select>';
+
+}
+
+document.getElementById("answerBox")
+.innerHTML = html;
+
+}
+
+function nextQuestion(){
+
+let q = questions[currentQuestion];
+
+answers[q.id] =
+document.getElementById("answer").value;
+
+if(
+q.id==="activity" &&
+answers.activity==="Working at Height" &&
+!questions.find(x=>x.id==="height")
+){
+
+questions.push({
+
+id:"height",
+text:"Maximum working height (metres)",
+type:"text"
+
+});
+
+}
+
+currentQuestion++;
+
+if(currentQuestion < questions.length){
+
+renderQuestion();
+
+}else{
+
+generateRAMS();
+
+}
+
+}
+
+function generateRAMS(){
+
+document.getElementById("nextBtn")
+.style.display="none";
+
+document.getElementById("questionBox")
+.style.display="none";
+
+document.getElementById("answerBox")
+.style.display="none";
+
+let hazards =
+hazardLibrary[
+answers.activity
+] || [];
+
+let report = "";
+
+report +=
+"DR ASSESSMENT BUILDER RAMS\n\n";
+
+report +=
+"Project: "
++ answers.project + "\n";
+
+report +=
+"Location: "
++ answers.location + "\n";
+
+report +=
+"Activity: "
++ answers.activity + "\n\n";
+
+if(answers.height){
+
+report +=
+"Working Height: "
++ answers.height +
+" metres\n\n";
+
+}
+
+report +=
+"RISK ASSESSMENT\n";
+report +=
+"========================\n";
+
+hazards.forEach(h=>{
+
+report +=
+"- " + h + "\n";
+
+});
+
+report +=
+"\n";
+
+report +=
+"METHOD STATEMENT\n";
+report +=
+"========================\n";
+
+report +=
+"1. Attend site induction\n";
+
+report +=
+"2. Brief workforce on RAMS\n";
+
+report +=
+"3. Establish controls\n";
+
+report +=
+"4. Complete task safely\n";
+
+report +=
+"5. Leave area safe and tidy\n";
+
+report +=
+"\n";
+
+report +=
+"EMERGENCY ARRANGEMENTS\n";
+report +=
+"========================\n";
+
+report +=
+"First aid available on site\n";
+
+report +=
+"Emergency services via 999\n";
+
+document.getElementById("output")
+.textContent = report;
+
+}
+
+renderQuestion();
+
+</script>
+
+</body>
+</html>
